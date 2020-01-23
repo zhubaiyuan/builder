@@ -88,6 +88,82 @@ impl From<BuilderInfo> for TokenStream {
     }
 }
 
+impl BuilderInfo {
+    fn generate_builder(self) -> proc_macro2::TokenStream {
+        let gen_typ = syn::Ident::new("__Builder_T", proc_macro2::Span::call_site());
+
+        let setters = self.fields.iter().map(|(n, t, _)| {
+            quote! {
+                fn #n<#gen_typ: Into<#t>>(mut self, val: #gen_typ) -> Self {
+                    self.#n = Some(val.into());
+                    self
+                }
+            }
+        });
+
+        let builder_fields = self.fields.iter().map(|(n, t, _)| {
+            quote! {
+                #n: Option<#t>,
+            }
+        });
+
+        let builder_defaults = self.fields.iter().map(|(n, _, _)| {
+            quote! {
+                #n: None,
+            }
+        });
+
+        let builder_build = self.fields.iter().map(|(n, _t, a)| {
+            if a.is_empty() {
+                quote! {
+                    #n: self.#n.unwrap_or_else(Default::default),
+                }
+            } else {
+                quote! {
+                    #n: self.#n.unwrap(),
+                }
+            }
+        });
+
+        let name = self.name;
+        let (impl_generics, ty_generics, maybe_where) = self.generics.split_for_impl();
+        let builder_name = syn::Ident::new(&format!("{}Builder", name), name.span());
+        quote! {
+            impl #impl_generics #name #ty_generics #maybe_where {
+                fn builder() -> #builder_name #ty_generics {
+                    #builder_name::new()
+                }
+            }
+
+            impl #impl_generics Default for #builder_name #ty_generics #maybe_where {
+                fn default() -> Self {
+                    #builder_name {
+                        #(#builder_defaults)*
+                    }
+                }
+            }
+
+            struct #builder_name #ty_generics #maybe_where {
+                #(#builder_fields)*
+            }
+
+            impl #impl_generics #builder_name #ty_generics #maybe_where {
+                fn new() -> Self {
+                    Default::default()
+                }
+
+                #(#setters)*
+
+                fn build(self) -> #name #ty_generics {
+                    #name {
+                        #(#builder_build)*
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn parse_builder_struct(
     struct_: syn::DataStruct,
     name: syn::Ident,
