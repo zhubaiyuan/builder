@@ -85,3 +85,22 @@ struct BuilderInfo {
 enum BuilderAttribute {
     Required(proc_macro2::TokenStream),
 }
+
+struct BuilderAttributeBody(Vec<BuilderAttribute>);
+
+impl syn::parse::Parse for BuilderAttributeBody {
+    fn parse(input: syn::parse::ParseStream) -> SynResult<Self> {
+        use syn::punctuated::Punctuated;
+        use syn::token::Comma;
+
+        let inside;
+        parenthesized!(inside in input);
+
+        let parse_comma_list = Punctuated::<BuilderAttribute, Comma>::parse_terminated;
+        let list = parse_comma_list(&inside)?;
+
+        Ok(BuilderAttributeBody(
+            list.into_pairs().map(|p| p.into_value()).collect(),
+        ))
+    }
+}
