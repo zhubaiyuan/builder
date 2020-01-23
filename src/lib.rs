@@ -81,3 +81,7 @@ struct BuilderInfo {
     generics: syn::Generics,
     fields: Vec<(Option<syn::Ident>, syn::Type, Vec<BuilderAttribute>)>,
 }
+
+enum BuilderAttribute {
+    Required(proc_macro2::TokenStream),
+}
