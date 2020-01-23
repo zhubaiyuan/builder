@@ -82,6 +82,12 @@ struct BuilderInfo {
     fields: Vec<(Option<syn::Ident>, syn::Type, Vec<BuilderAttribute>)>,
 }
 
+impl From<BuilderInfo> for TokenStream {
+    fn from(other: BuilderInfo) -> TokenStream {
+        other.generate_builder().into()
+    }
+}
+
 fn parse_builder_struct(
     struct_: syn::DataStruct,
     name: syn::Ident,
