@@ -27,6 +27,28 @@ fn to_compile_errors(errors: Vec<syn::Error>) -> proc_macro2::TokenStream {
 
 type MultiResult<T> = std::result::Result<T, Vec<syn::Error>>;
 
+fn parse_builder_information(ty: syn::DeriveInput) -> MultiResult<BuilderInfo> {
+    use syn::spanned::Spanned;
+    use syn::Data;
+
+    let span = ty.span();
+    let syn::DeriveInput {
+        ident,
+        generics,
+        data,
+        attrs,
+        ..
+    } = ty;
+
+    match data {
+        Data::Struct(struct_) => parse_builder_struct(struct_, ident, generics, attrs, span),
+        _ => Err(vec![syn::Error::new(
+            span,
+            "Can only derive `Builder` for a struct",
+        )]),
+    }
+}
+
 #[derive(Debug, Default)]
 struct SyntaxErrors {
     inner: Vec<syn::Error>,
