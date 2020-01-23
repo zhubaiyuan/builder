@@ -75,3 +75,9 @@ impl SyntaxErrors {
         }
     }
 }
+
+struct BuilderInfo {
+    name: syn::Ident,
+    generics: syn::Generics,
+    fields: Vec<(Option<syn::Ident>, syn::Type, Vec<BuilderAttribute>)>,
+}
