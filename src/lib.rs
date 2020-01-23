@@ -26,3 +26,8 @@ fn to_compile_errors(errors: Vec<syn::Error>) -> proc_macro2::TokenStream {
 }
 
 type MultiResult<T> = std::result::Result<T, Vec<syn::Error>>;
+
+#[derive(Debug, Default)]
+struct SyntaxErrors {
+    inner: Vec<syn::Error>,
+}
