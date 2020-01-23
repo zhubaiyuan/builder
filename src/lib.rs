@@ -31,3 +31,25 @@ type MultiResult<T> = std::result::Result<T, Vec<syn::Error>>;
 struct SyntaxErrors {
     inner: Vec<syn::Error>,
 }
+
+impl SyntaxErrors {
+    fn add<D, T>(&mut self, tts: T, description: D)
+    where
+        D: fmt::Display,
+        T: quote::ToTokens,
+    {
+        self.inner.push(syn::Error::new_spanned(tts, description));
+    }
+
+    fn extend(&mut self, errors: Vec<syn::Error>) {
+        self.inner.extend(errors);
+    }
+
+    fn finish(self) -> MultiResult<()> {
+        if self.inner.is_empty() {
+            Ok(())
+        } else {
+            Err(self.inner)
+        }
+    }
+}
