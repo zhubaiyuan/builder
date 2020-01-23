@@ -24,3 +24,5 @@ fn to_compile_errors(errors: Vec<syn::Error>) -> proc_macro2::TokenStream {
     let compile_errors = errors.iter().map(syn::Error::to_compile_error);
     quote! { #(#compile_errors)* }
 }
+
+type MultiResult<T> = std::result::Result<T, Vec<syn::Error>>;
