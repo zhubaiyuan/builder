@@ -86,6 +86,23 @@ enum BuilderAttribute {
     Required(proc_macro2::TokenStream),
 }
 
+impl syn::parse::Parse for BuilderAttribute {
+    fn parse(input: syn::parse::ParseStream) -> SynResult<Self> {
+        use syn::Ident;
+
+        let input_tts = input.cursor().token_stream();
+        let name: Ident = input.parse()?;
+        if name == "required" {
+            Ok(BuilderAttribute::Required(input_tts))
+        } else {
+            Err(syn::Error::new(
+                name.span(),
+                "expected `required`",
+            ))
+        }
+    }
+}
+
 struct BuilderAttributeBody(Vec<BuilderAttribute>);
 
 impl syn::parse::Parse for BuilderAttributeBody {
