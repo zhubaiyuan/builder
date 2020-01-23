@@ -19,3 +19,8 @@ fn impl_builder_macro(ty: syn::DeriveInput) -> TokenStream {
         Err(e) => to_compile_errors(e).into(),
     }
 }
+
+fn to_compile_errors(errors: Vec<syn::Error>) -> proc_macro2::TokenStream {
+    let compile_errors = errors.iter().map(syn::Error::to_compile_error);
+    quote! { #(#compile_errors)* }
+}
