@@ -82,6 +82,58 @@ struct BuilderInfo {
     fields: Vec<(Option<syn::Ident>, syn::Type, Vec<BuilderAttribute>)>,
 }
 
+fn parse_builder_struct(
+    struct_: syn::DataStruct,
+    name: syn::Ident,
+    generics: syn::Generics,
+    attrs: Vec<syn::Attribute>,
+    span: proc_macro2::Span,
+) -> MultiResult<BuilderInfo> {
+    use syn::Fields;
+
+    let mut errors = SyntaxErrors::default();
+
+    for attr in attributes_from_syn(attrs)? {
+        match attr {
+            BuilderAttribute::Required(tts) => {
+                errors.add(tts, "required is only valid on a field");
+            }
+        }
+    }
+
+    let fields = match struct_.fields {
+        Fields::Named(fields) => fields,
+        _ => {
+            errors.extend(vec![syn::Error::new(
+                span,
+                "only named fields are supported",
+            )]);
+            return Err(errors
+                .finish()
+                .expect_err("just added an error so there should be one"));
+        }
+    };
+    let fields = fields
+        .named
+        .into_iter()
+        .map(|f| match attributes_from_syn(f.attrs) {
+            Ok(attrs) => (f.ident, f.ty, attrs),
+            Err(e) => {
+                errors.extend(e);
+                (f.ident, f.ty, vec![])
+            }
+        })
+        .collect();
+
+    errors.finish()?;
+
+    Ok(BuilderInfo {
+        name,
+        generics,
+        fields,
+    })
+}
+
 fn attributes_from_syn(attrs: Vec<syn::Attribute>) -> MultiResult<Vec<BuilderAttribute>> {
     use syn::parse2;
 
