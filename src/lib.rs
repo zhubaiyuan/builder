@@ -12,3 +12,10 @@ pub fn builder_derive(input: TokenStream) -> TokenStream {
 
     impl_builder_macro(ast)
 }
+
+fn impl_builder_macro(ty: syn::DeriveInput) -> TokenStream {
+    match parse_builder_information(ty) {
+        Ok(info) => info.into(),
+        Err(e) => to_compile_errors(e).into(),
+    }
+}
